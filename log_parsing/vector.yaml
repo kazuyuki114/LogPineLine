@@ -1,0 +1,303 @@
+sources:
+  json_logs:
+    type: "kafka"
+    bootstrap_servers: "kafka:9092"
+    group_id: "vector-clickhouse-consumer"
+    topics:
+      - "json-logs"
+    session_timeout_ms: 30000
+    fetch_wait_max_ms: 500
+    auto_offset_reset: "earliest"
+  apache_access_logs:
+    type: "kafka"
+    bootstrap_servers: "kafka:9092"
+    group_id: "vector-clickhouse-consumer"
+    topics:
+      - "apache-combined-logs"
+    session_timeout_ms: 30000
+    fetch_wait_max_ms: 500
+    auto_offset_reset: "earliest"
+  apache_error_logs:
+    type: "kafka"
+    bootstrap_servers: "kafka:9092"
+    group_id: "vector-clickhouse-consumer"
+    topics:
+      - "apache-error-logs"
+    session_timeout_ms: 30000
+    fetch_wait_max_ms: 500
+    auto_offset_reset: "earliest"
+  rfc3164_syslog_logs:
+    type: "kafka"
+    bootstrap_servers: "kafka:9092"
+    group_id: "vector-clickhouse-consumer"
+    topics:
+      - "rfc3164-syslogs"
+    session_timeout_ms: 30000
+    fetch_wait_max_ms: 500
+    auto_offset_reset: "earliest"
+transforms:
+  json_transform:
+    inputs:
+      - "json_logs"
+    type: "remap"
+    source: |
+      # Parse the nested JSON string
+      parsed_message, err = parse_json(.message)
+      inside_message, err = parse_json(parsed_message.message)
+
+      if err == null {
+
+        # Save metadata fields
+        _container_name = parsed_message.container_name
+        _source_type = parsed_message.source_type
+        _stream = parsed_message.stream
+        _timestamp = parsed_message.timestamp
+
+        # The original logs
+        . = inside_message
+
+        # Add back the metadata fields
+        .container_name = _container_name
+        .source_type = _source_type
+        .stream = _stream
+
+        # Parse timestamp
+        ts, err = parse_timestamp(_timestamp, format: "%+")
+        if err == null {
+          .timestamp = format_timestamp!(ts, format: "%Y-%m-%d %H:%M:%S%.3f")
+        } else {
+          .timestamp = format_timestamp!(now(), format: "%Y-%m-%d %H:%M:%S%.3f")
+        }
+        
+
+      } else {
+        log("Failed to parse JSON in message", level: "error")
+      }
+
+  apache_access_transform:
+    inputs:
+      - "apache_access_logs"
+    type: "remap"
+    source: |
+      # Parse the nested JSON stringg
+      parsed_message, err = parse_json(.message)
+      inside_message, err = parse_apache_log(parsed_message.message, format: "combined")
+
+      if err == null {
+
+        # Save metadata fields
+        _container_name = parsed_message.container_name
+        _source_type = parsed_message.source_type
+        _stream = parsed_message.stream
+        _timestamp = parsed_message.timestamp
+        
+        # The original logs
+        . = inside_message
+
+        # Add back the metadata fields
+        .container_name = _container_name
+        .source_type = _source_type
+        .stream = _stream
+
+        # Parse timestamp
+        ts, err = parse_timestamp(_timestamp, format: "%+")
+        if err == null {
+          .timestamp = format_timestamp!(ts, format: "%Y-%m-%d %H:%M:%S%.3f")
+        } else {
+          .timestamp = format_timestamp!(now(), format: "%Y-%m-%d %H:%M:%S%.3f")
+        }
+      } else {
+        log("Failed to parse Apache log", level: "error")
+      }
+
+  apache_error_transform:
+    inputs:
+      - "apache_error_logs"
+    type: "remap"
+    source: |
+      # Parse the nested JSON string
+      parsed_message, err = parse_json(.message)
+
+      if err == null {
+        # Save metadata fields
+        _container_name = parsed_message.container_name
+        _source_type = parsed_message.source_type
+        _stream = parsed_message.stream
+        _timestamp = parsed_message.timestamp
+        _raw_message = parsed_message.message
+        
+        # Parse Apache error log format using regex
+        # Format: [timestamp] [module:level] [pid tid] [client ip:port] message
+        matches, err = parse_regex(_raw_message, r'^\[(?P<log_timestamp>[^\]]+)\] \[(?P<module_level>[^\]]+)\] \[pid (?P<pid>\d+):tid (?P<tid>\d+)\] \[client (?P<client>[^\]]+)\] (?P<error_message>.+)$')
+        
+        if err == null {
+          # Set parsed fields
+          .log_timestamp = matches.log_timestamp
+          # Split module:level into separate fields
+          parts = split!(matches.module_level, ":")
+          .module = parts[0] 
+          .level = parts[1]
+          .pid = to_int!(matches.pid)
+          .tid = to_int!(matches.tid)
+          .client = matches.client
+          .error_message = matches.error_message
+          
+          # Add back the metadata fields
+          .container_name = _container_name
+          .source_type = _source_type
+          .stream = _stream
+
+          # Remove unnecessary fields
+          del(.message)
+          del(.topic)
+          del(.headers)
+          del(.partition)
+          del(.offset)
+          del(.message_key)
+
+          # Parse timestamp
+          ts, err = parse_timestamp(_timestamp, format: "%+")
+          if err == null {
+            .timestamp = format_timestamp!(ts, format: "%Y-%m-%d %H:%M:%S%.3f")
+          } else {
+            .timestamp = format_timestamp!(now(), format: "%Y-%m-%d %H:%M:%S%.3f")
+          }
+        } else {
+          log("Failed to parse Apache error log with regex", level: "error")
+        }
+      } else {
+        log("Failed to parse JSON message", level: "error")
+      }
+
+  rfc3164_syslog_transform:
+    inputs:
+      - "rfc3164_syslog_logs"
+    type: "remap"
+    source: |
+      # Parse the nested JSON string
+      parsed_message, err = parse_json(.message)
+      inside_message, err = parse_syslog(parsed_message.message)
+
+      if err == null {
+
+        # Save metadata fields
+        _container_name = parsed_message.container_name
+        _source_type = parsed_message.source_type
+        _stream = parsed_message.stream
+        _timestamp = parsed_message.timestamp
+
+        # The original logs
+        . = inside_message
+
+        # Add back the metadata fields
+        .container_name = _container_name
+        .source_type = _source_type
+        .stream = _stream
+
+        # Parse timestamp
+        ts, err = parse_timestamp(_timestamp, format: "%+")
+        if err == null {
+          .timestamp = format_timestamp!(ts, format: "%Y-%m-%d %H:%M:%S%.3f")
+        } else {
+          .timestamp = format_timestamp!(now(), format: "%Y-%m-%d %H:%M:%S%.3f")
+        }
+        
+
+      } else {
+        log("Failed to parse RFC3164 syslog message", level: "error")
+      }
+sinks:
+  clickhouse_json_logs:
+    type: "clickhouse"
+    inputs:
+      - "json_transform"
+    endpoint: "http://clickhouse:8123"
+    database: "logs_db"
+    table: "json_service_logs"
+    auth:
+      strategy: "basic"
+      user: "${CLICKHOUSE_USER}"
+      password: "${CLICKHOUSE_PASSWORD}"
+    compression: "gzip"
+    batch:
+      max_bytes: 104857600 
+      max_events: 500000 
+    buffer:
+      type: "memory" 
+      max_size: 100000
+      when_full: "block" 
+    healthcheck:
+      enabled: true
+
+  clickhouse_apache_access_logs:
+    type: "clickhouse"
+    inputs:
+      - "apache_access_transform"
+    endpoint: "http://clickhouse:8123"
+    database: "logs_db"
+    table: "apache_access_logs"
+    auth:
+      strategy: "basic"
+      user: "${CLICKHOUSE_USER}"
+      password: "${CLICKHOUSE_PASSWORD}"
+    compression: "gzip"
+    batch:
+      max_bytes: 104857600 
+      max_events: 500000 
+    buffer:
+      type: "memory" 
+      max_size: 100000
+      when_full: "block" 
+    healthcheck:
+      enabled: true
+
+  clickhouse_apache_error_logs:
+    type: "clickhouse"
+    inputs:
+      - "apache_error_transform"
+    endpoint: "http://clickhouse:8123"
+    database: "logs_db"
+    table: "apache_error_logs"
+    auth:
+      strategy: "basic"
+      user: "${CLICKHOUSE_USER}"
+      password: "${CLICKHOUSE_PASSWORD}"
+    compression: "gzip"
+    batch:
+      max_bytes: 104857600 
+      max_events: 500000 
+    buffer:
+      type: "memory" 
+      max_size: 100000
+      when_full: "block" 
+    healthcheck:
+      enabled: true
+
+  clickhouse_rfc3164_syslogs:
+    type: "clickhouse"
+    inputs:
+      - "rfc3164_syslog_transform"
+    endpoint: "http://clickhouse:8123"
+    database: "logs_db"
+    table: "rfc3164_syslogs"
+    auth:
+      strategy: "basic"
+      user: "${CLICKHOUSE_USER}"
+      password: "${CLICKHOUSE_PASSWORD}"
+    compression: "gzip"
+    batch:
+      max_bytes: 104857600 
+      max_events: 500000 
+    buffer:
+      type: "memory" 
+      max_size: 100000
+      when_full: "block" 
+    healthcheck:
+      enabled: true
+
+  # print_logs:
+  #   type: console
+  #   inputs:
+  #     - "apache_access_transform"
+  #   encoding:
+  #     codec: "json"

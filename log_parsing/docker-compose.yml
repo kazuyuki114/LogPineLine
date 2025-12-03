@@ -1,0 +1,14 @@
+services:
+  # Vector transform logs and send to ClickHouse
+  vector-clickhouse:
+    image: timberio/vector:0.51.0-debian
+    container_name: vector-clickhouse
+    volumes:
+      - ./vector.yaml:/etc/vector/vector.yaml:ro
+    ports:
+      - "8687:8687"
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    depends_on:
+      - clickhouse

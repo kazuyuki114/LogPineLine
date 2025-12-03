@@ -1,0 +1,52 @@
+services:
+  # Source 1: JSON logs
+  source-json-service:
+    image: mingrammer/flog
+    container_name: source-json-service
+    restart: unless-stopped
+    # Uses JSON_DELAY from .env, defaults to 10ms if missing
+    command: -f json -l -d ${JSON_DELAY:-10ms}
+    volumes:
+      - log-data:/app-logs
+    env_file:
+      - ../.env
+
+  # Source 2: Apache Combined logs
+  source-apache-access:
+    image: mingrammer/flog
+    container_name: source-apache-access
+    restart: unless-stopped
+    # Uses APACHE_ACCESS_DELAY from .env
+    command: -f apache_combined -l -d ${APACHE_ACCESS_DELAY:-10ms}
+    volumes:
+      - log-data:/app-logs
+    env_file:
+      - ../.env
+
+  # Source 3: Apache Error logs
+  source-apache-error:
+    image: mingrammer/flog
+    container_name: source-apache-error
+    restart: unless-stopped
+    # Uses APACHE_ERROR_DELAY from .env
+    command: -f apache_error -l -d ${APACHE_ERROR_DELAY:-200ms}
+    volumes:
+      - log-data:/app-logs
+    env_file:
+      - ../.env
+
+  # Source 4: Syslog
+  source-rfc3164-syslog:
+    image: mingrammer/flog
+    container_name: source-rfc3164-syslog
+    restart: unless-stopped
+    # Uses SYSLOG_DELAY from .env
+    command: -f rfc3164 -l -d ${SYSLOG_DELAY:-10ms}
+    volumes:
+      - log-data:/app-logs
+    env_file:
+      - ../.env
+      
+volumes:
+  log-data:
+    external: true

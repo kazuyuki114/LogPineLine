@@ -1,0 +1,98 @@
+services:
+  # Source 1: JSON logs
+  source-json-service:
+    extends:
+      file: ./log_sources/docker-compose.yml
+      service: source-json-service
+
+  # Source 2: Apache Combined logs
+  source-apache-access:
+    extends:
+      file: ./log_sources/docker-compose.yml
+      service: source-apache-access
+  # Source 3: Apache Error logs
+  source-apache-error:
+    extends:
+      file: ./log_sources/docker-compose.yml
+      service: source-apache-error
+
+  # Source 4: Syslog
+  source-rfc3164-syslog:
+    extends:
+      file: ./log_sources/docker-compose.yml
+      service: source-rfc3164-syslog
+
+  # Kafka Broker
+  kafka:
+    extends:
+      file: ./kafka/docker-compose.yml
+      service: kafka
+
+  init-kafka:
+    extends:
+      file: ./kafka/docker-compose.yml
+      service: init-kafka
+
+  kafka-ui:
+    extends:
+      file: ./kafka/docker-compose.yml
+      service: kafka-ui
+  kafka-exporter:
+    extends:
+      file: ./kafka/docker-compose.yml
+      service: kafka-exporter
+
+  # Vector
+  log-shipping-vector:
+    extends:
+      file: ./log_shipping/docker-compose.yml
+      service: log-shipping-vector
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+
+  vector-clickhouse:
+    extends:
+      file: ./log_parsing/docker-compose.yml
+      service: vector-clickhouse
+    depends_on:
+      - kafka
+      - init-clickhouse
+  
+  # Clickhouse
+  clickhouse:
+    extends:
+      file: ./clickhouse/docker-compose.yml
+      service: clickhouse
+  init-clickhouse:
+    extends:
+      file: ./clickhouse/docker-compose.yml
+      service: init-clickhouse
+  clickhouse-exporter:
+    extends:
+      file: ./clickhouse/docker-compose.yml
+      service: clickhouse-exporter
+
+  # Prometheus
+  prometheus:
+    extends:
+      file: ./prometheus/docker-compose.yml 
+      service: prometheus
+    depends_on:
+      - clickhouse-exporter
+      - kafka-exporter
+
+  # Grafana
+  grafana:
+    extends:
+      file: ./grafana/docker-compose.yml
+      service: grafana
+    depends_on:
+      - clickhouse
+
+volumes:
+  log-data:
+  kafka-data:
+  clickhouse-data:
+  prometheus_data:
+  grafana-data:

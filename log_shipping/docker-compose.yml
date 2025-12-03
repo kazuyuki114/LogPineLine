@@ -1,0 +1,16 @@
+services:
+  # Vector for log shipping
+  log-shipping-vector:
+    image: timberio/vector:0.51.0-debian
+    container_name: log-shipping-vector
+    volumes:
+      - log-data:/app-logs:ro
+      - ./vector.yaml:/etc/vector/vector.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "8686:8686"
+    restart: unless-stopped
+
+volumes:
+  log-data:
+    external: true
