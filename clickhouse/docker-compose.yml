@@ -17,13 +17,20 @@ services:
         hard: 262144
     volumes:
       - clickhouse-data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # ClickHouse initialization
   init-clickhouse:
     image: clickhouse/clickhouse-server
     container_name: init-clickhouse
     depends_on:
-      - clickhouse
+      clickhouse:
+        condition: service_healthy
     environment:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
@@ -46,7 +53,8 @@ services:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
     depends_on:
-      - clickhouse
+      clickhouse:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

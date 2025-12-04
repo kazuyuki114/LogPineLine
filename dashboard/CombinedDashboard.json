@@ -181,7 +181,7 @@
           },
           "pluginVersion": "4.11.2",
           "queryType": "table",
-          "rawSql": "SELECT    (countIf(        match(level_or_status, '4\\d\\d|5\\d\\d|Error|Critical|Alert|Emergency')    ) / count()) * 100 FROM logs_db.unified_logs_view WHERE timestamp >= $__fromTime AND timestamp <= $__toTime",
+          "rawSql": "SELECT\n   (countIf(\n       match(level_or_status, '4\\d\\d|5\\d\\d|Error|Critical|Alert|Emergency')\n   ) / count()) * 100\nFROM logs_db.unified_logs_view\nWHERE timestamp >= $__fromTime AND timestamp <= $__toTime",
           "refId": "A"
         }
       ],
@@ -261,7 +261,7 @@
           },
           "pluginVersion": "4.11.2",
           "queryType": "table",
-          "rawSql": "SELECT container_name, count() FROM logs_db.unified_logs_view WHERE timestamp >= $__fromTime AND timestamp <= $__toTime GROUP BY container_name",
+          "rawSql": "SELECT container_name, count()\nFROM logs_db.unified_logs_view\nWHERE timestamp >= $__fromTime AND timestamp <= $__toTime\nGROUP BY container_name",
           "refId": "A"
         }
       ],
@@ -380,7 +380,7 @@
               },
               "pluginVersion": "4.11.2",
               "queryType": "table",
-              "rawSql": "SELECT     toStartOfMinute(timestamp) as time,     count() as log_count FROM logs_db.unified_logs_view GROUP BY time ORDER BY time ASC;",
+              "rawSql": "SELECT\n    toStartOfMinute(timestamp) as time,\n    count() as log_count\nFROM logs_db.unified_logs_view\nGROUP BY time\nORDER BY time ASC;",
               "refId": "A"
             }
           ],
@@ -489,7 +489,7 @@
               },
               "pluginVersion": "4.11.2",
               "queryType": "table",
-              "rawSql": "SELECT     toStartOfMinute(timestamp) as time,     sum(size_bytes) as total_bytes FROM logs_db.unified_logs_view WHERE log_type IN ('JSON Service', 'Apache Access')   AND timestamp >= $__fromTime AND timestamp <= $__toTime GROUP BY time ORDER BY time",
+              "rawSql": "SELECT\n    toStartOfMinute(timestamp) as time,\n    sum(size_bytes) as total_bytes\nFROM logs_db.unified_logs_view\nWHERE log_type IN ('JSON Service', 'Apache Access')\n  AND timestamp >= $__fromTime AND timestamp <= $__toTime\nGROUP BY time\nORDER BY time",
               "refId": "A"
             }
           ],
@@ -611,7 +611,7 @@
           },
           "pluginVersion": "4.11.2",
           "queryType": "table",
-          "rawSql": "SELECT     level_or_status as status_code,     count() as count FROM logs_db.unified_logs_view WHERE log_type IN ('JSON Service', 'Apache Access')   AND timestamp >= $__fromTime AND timestamp <= $__toTime GROUP BY status_code ORDER BY count DESC",
+          "rawSql": "SELECT\n    level_or_status as status_code,\n    count() as count\nFROM logs_db.unified_logs_view\nWHERE log_type IN ('JSON Service', 'Apache Access')\n  AND timestamp >= $__fromTime AND timestamp <= $__toTime\nGROUP BY status_code\nORDER BY count DESC",
           "refId": "A"
         }
       ],

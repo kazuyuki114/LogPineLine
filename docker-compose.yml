@@ -56,8 +56,10 @@ services:
       file: ./log_parsing/docker-compose.yml
       service: vector-clickhouse
     depends_on:
-      - kafka
-      - init-clickhouse
+      kafka:
+        condition: service_healthy
+      init-clickhouse:
+        condition: service_completed_successfully
   
   # Clickhouse
   clickhouse:
@@ -77,7 +79,8 @@ services:
       file: ./clickhouse_mcp/docker-compose.yml
       service: mcp-clickhouse
     depends_on:
-      - clickhouse
+      clickhouse:
+        condition: service_healthy
 
   # Prometheus
   prometheus:
@@ -94,7 +97,8 @@ services:
       file: ./grafana/docker-compose.yml
       service: grafana
     depends_on:
-      - clickhouse
+      clickhouse:
+        condition: service_healthy
   grafana-mcp:
     extends:
       file: ./grafana_mcp/docker-compose.yml
