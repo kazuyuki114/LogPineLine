@@ -113,5 +113,3 @@ volumes:
   clickhouse-data:
   prometheus_data:
   grafana-data:
-  postgres-data:
-  n8n-data:
