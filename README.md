@@ -13,7 +13,7 @@ This pipeline collects, parses, stores, and visualizes logs from multiple source
 - **ClickHouse** - Time-series database for log storage
 - **Grafana** - Dashboard visualization
 - **Prometheus** - Metrics collection
-- **N8N** - Workflow automation
+- **MCP Servers** - Manage ClickHouse and Grafana configurations
 
 ## Supported Log Formats
 
@@ -36,7 +36,6 @@ docker compose -f log_shipping/docker-compose.yml up -d
 docker compose -f log_parsing/docker-compose.yml up -d
 docker compose -f grafana/docker-compose.yml up -d
 docker compose -f prometheus/docker-compose.yml up -d
-docker compose -f n8n/docker-compose.yml up -d
 ```
 
 ## Health Checks
@@ -69,7 +68,6 @@ Dependent services wait for these health checks to pass before starting, ensurin
 | ClickHouse | 9000 | Native client |
 | Grafana | 3000 | Dashboard UI |
 | Prometheus | 9090 | Metrics UI |
-| N8N | 5678 | Workflow automation UI |
 | Kafka Exporter | 9308 | Kafka metrics |
 | ClickHouse Exporter | 9116 | ClickHouse metrics |
 
