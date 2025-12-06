@@ -12,3 +12,11 @@ scrape_configs:
     static_configs:
       - targets: ['kafka-exporter:9308']
     scrape_interval: 10s
+  # Grafana
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    scrape_interval: 10s 
+    basic_auth:
+      username: '${GRAFANA_PROMETHEUS_USER}'
+      password: '${GRAFANA_PROMETHEUS_PASSWORD}'

@@ -15,78 +15,13 @@ transforms:
     source: |
       .timestamp = now()
 
-  # Route logs by container name
-  route_logs:
+sinks:
+  kafka_logs:
     inputs:
       - "parse_logs"
-    type: "route"
-    route:
-      json_service: '.container_name == "source-json-service"'
-      apache_access: '.container_name == "source-apache-access"'
-      apache_error: '.container_name == "source-apache-error"'
-      rfc3164_syslog: '.container_name == "source-rfc3164-syslog"'
-
-sinks:
-  kafka_json_service:
-    inputs:
-      - "route_logs.json_service"
     type: "kafka"
     bootstrap_servers: "kafka:9092"
-    topic: "json-logs"
-    encoding:
-      codec: "json"
-    batch:
-      max_bytes: 104857600 
-      max_events: 500000 
-    buffer:
-      type: "memory" 
-      max_size: 100000
-      when_full: "block" 
-    healthcheck:
-      enabled: true
-
-  kafka_apache_access:
-    inputs:
-      - "route_logs.apache_access"
-    type: "kafka"
-    bootstrap_servers: "kafka:9092"
-    topic: "apache-combined-logs"
-    encoding:
-      codec: "json"
-    batch:
-      max_bytes: 104857600 
-      max_events: 500000 
-    buffer:
-      type: "memory" 
-      max_size: 100000
-      when_full: "block" 
-    healthcheck:
-      enabled: true
-
-  kafka_apache_error:
-    inputs:
-      - "route_logs.apache_error"
-    type: "kafka"
-    bootstrap_servers: "kafka:9092"
-    topic: "apache-error-logs"
-    encoding:
-      codec: "json"
-    batch:
-      max_bytes: 104857600 
-      max_events: 500000 
-    buffer:
-      type: "memory" 
-      max_size: 100000
-      when_full: "block" 
-    healthcheck:
-      enabled: true
-
-  kafka_rfc3164_syslog:
-    inputs:
-      - "route_logs.rfc3164_syslog"
-    type: "kafka"
-    bootstrap_servers: "kafka:9092"
-    topic: "rfc3164-syslogs"
+    topic: "logs"
     encoding:
       codec: "json"
     batch:

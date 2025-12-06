@@ -80,7 +80,7 @@ Pre-configured Grafana dashboards are available in the `dashboard/` folder:
 - `SyslogDashboard.json` - Syslog metrics
 - `JsonDashboard.json` - JSON service log metrics
 - `CombinedDashboard.json` - Unified view of all logs
-
+- Temlate ID: 882 for ClickHouse, 7589 for Kafka, 3590 for Grafana
 ## Project Structure
 
 ```
