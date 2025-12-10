@@ -21,7 +21,7 @@ echo "Creating topics..."
 kafka-topics --bootstrap-server kafka:9092 \
   --create \
   --topic logs \
-  --partitions 1 \
+  --partitions 2 \
   --replication-factor 1
 
 

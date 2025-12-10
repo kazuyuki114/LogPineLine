@@ -6,7 +6,7 @@ sources:
     topics:
       - "logs"
     session_timeout_ms: 30000
-    fetch_wait_max_ms: 500
+    fetch_wait_max_ms: 100
     auto_offset_reset: "earliest"
   internal_metrics:
     type: "internal_metrics"
