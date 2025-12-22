@@ -93,7 +93,6 @@ Pre-configured Grafana dashboards are available in the `dashboard/` folder:
 ├── log_parsing/         # Vector log parsing configuration
 ├── log_shipping/        # Vector log shipping configuration
 ├── log_sources/         # Sample log generators
-├── n8n/                 # N8N workflow automation
 ├── prometheus/          # Prometheus metrics configuration
 └── docker-compose.yml   # Main orchestration file
 ```
